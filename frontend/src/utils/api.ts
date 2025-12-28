@@ -1,5 +1,5 @@
 // frontend/src/utils/api.ts
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://gebeyaalert-1.onrender.com/api/v1';
 
 interface ApiResponse<T> {
   data?: T;
