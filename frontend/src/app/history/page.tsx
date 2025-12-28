@@ -1,127 +1,137 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
-import { useLanguage } from '@/contexts/LanguageContext'
-import Link from 'next/link'
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
-import { apiClient } from '@/lib/api'
-import Header from '@/components/Header'
-import BottomNavigation from '@/components/BottomNavigation'
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import Link from "next/link";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
+import { apiClient } from "@/lib/api";
+import Header from "@/components/Header";
+import BottomNavigation from "@/components/BottomNavigation";
 
 interface Crop {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 interface Market {
-  id: number
-  name: string
-  region: string
+  id: number;
+  name: string;
+  region: string;
 }
 
 interface PriceData {
-  id: number
-  crop_id: number
-  market_id: number
-  price: number
-  price_date: string
+  id: number;
+  crop_id: number;
+  market_id: number;
+  price: number;
+  price_date: string;
 }
 
 export default function PricesPage() {
-  const { isAuthenticated } = useAuth()
-  const { t } = useLanguage()
-  const router = useRouter()
-  const [crops, setCrops] = useState<Crop[]>([])
-  const [markets, setMarkets] = useState<Market[]>([])
-  const [selectedCropId, setSelectedCropId] = useState<number | null>(null)
-  const [selectedMarketId, setSelectedMarketId] = useState<number | null>(null)
-  const [timeRange, setTimeRange] = useState(30) // days
-  const [priceHistory, setPriceHistory] = useState<PriceData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [loadingHistory, setLoadingHistory] = useState(false)
+  const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
+  const router = useRouter();
+  const [crops, setCrops] = useState<Crop[]>([]);
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [selectedCropId, setSelectedCropId] = useState<number | null>(null);
+  const [selectedMarketId, setSelectedMarketId] = useState<number | null>(null);
+  const [timeRange, setTimeRange] = useState(30); // days
+  const [priceHistory, setPriceHistory] = useState<PriceData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login')
-      return
+      router.push("/login");
+      return;
     }
-    fetchCropsAndMarkets()
-  }, [isAuthenticated, router])
+    fetchCropsAndMarkets();
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     if (selectedCropId && selectedMarketId) {
-      fetchPriceHistory()
+      fetchPriceHistory();
     }
-  }, [selectedCropId, selectedMarketId, timeRange])
+  }, [selectedCropId, selectedMarketId, timeRange]);
 
   const fetchCropsAndMarkets = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const [cropsData, marketsData] = await Promise.all([
         apiClient.getCrops(),
         apiClient.getMarkets(),
-      ])
-      setCrops(cropsData)
-      setMarkets(marketsData)
-      if (cropsData.length > 0) setSelectedCropId(cropsData[0].id)
-      if (marketsData.length > 0) setSelectedMarketId(marketsData[0].id)
+      ]);
+      setCrops(cropsData);
+      setMarkets(marketsData);
+      if (cropsData.length > 0) setSelectedCropId(cropsData[0].id);
+      if (marketsData.length > 0) setSelectedMarketId(marketsData[0].id);
     } catch (err) {
-      console.error('Failed to fetch data:', err)
+      console.error("Failed to fetch data:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const fetchPriceHistory = async () => {
-    if (!selectedCropId || !selectedMarketId) return
+    if (!selectedCropId || !selectedMarketId) return;
 
     try {
-      setLoadingHistory(true)
+      setLoadingHistory(true);
       const prices = await apiClient.getPrices({
         crop_id: selectedCropId,
         market_id: selectedMarketId,
-      })
-      
+      });
+
       // Filter by date range and sort by date
-      const endDate = new Date()
-      const startDate = new Date()
-      startDate.setDate(startDate.getDate() - timeRange)
-      
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - timeRange);
+
       const filtered = prices
         .filter((p: PriceData) => {
-          const priceDate = new Date(p.price_date)
-          return priceDate >= startDate && priceDate <= endDate
+          const priceDate = new Date(p.price_date);
+          return priceDate >= startDate && priceDate <= endDate;
         })
-        .sort((a: PriceData, b: PriceData) => 
-          new Date(a.price_date).getTime() - new Date(b.price_date).getTime()
-        )
-      
-      setPriceHistory(filtered)
+        .sort(
+          (a: PriceData, b: PriceData) =>
+            new Date(a.price_date).getTime() - new Date(b.price_date).getTime()
+        );
+
+      setPriceHistory(filtered);
     } catch (err) {
-      console.error('Failed to fetch price history:', err)
+      console.error("Failed to fetch price history:", err);
     } finally {
-      setLoadingHistory(false)
+      setLoadingHistory(false);
     }
-  }
+  };
 
   // Process data for Recharts
   const chartData = useMemo(() => {
     return priceHistory.map((item) => ({
       date: item.price_date,
-      price: typeof item.price === 'number' ? item.price : parseFloat(item.price),
-      displayDate: new Date(item.price_date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
+      price:
+        typeof item.price === "number" ? item.price : parseFloat(item.price),
+      displayDate: new Date(item.price_date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
       }),
-    }))
-  }, [priceHistory])
+    }));
+  }, [priceHistory]);
 
-  const selectedCrop = crops.find((c) => c.id === selectedCropId)
-  const selectedMarket = markets.find((m) => m.id === selectedMarketId)
+  const selectedCrop = crops.find((c) => c.id === selectedCropId);
+  const selectedMarket = markets.find((m) => m.id === selectedMarketId);
 
-  if (!isAuthenticated || loading) return null
+  if (!isAuthenticated || loading) return null;
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans pb-24">
@@ -133,9 +143,11 @@ export default function PricesPage() {
         {/* Filters */}
         <div className="grid grid-cols-2 gap-6 mb-8 text-left">
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-800">Select Crop</label>
+            <label className="text-sm font-bold text-gray-800">
+              Select Crop
+            </label>
             <select
-              value={selectedCropId || ''}
+              value={selectedCropId || ""}
               onChange={(e) => setSelectedCropId(parseInt(e.target.value))}
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-green-500 outline-none appearance-none"
             >
@@ -147,15 +159,18 @@ export default function PricesPage() {
             </select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-800">Select Market</label>
+            <label className="text-sm font-bold text-gray-800">
+              Select Market
+            </label>
             <select
-              value={selectedMarketId || ''}
+              value={selectedMarketId || ""}
               onChange={(e) => setSelectedMarketId(parseInt(e.target.value))}
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-green-500 outline-none appearance-none"
             >
               {markets.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.name} {m.region ? `(${m.region})` : ''}
+                  {m.name.replace("'", "&apos;")}{" "}
+                  {m.region ? `(${m.region.replace("'", "&apos;")})` : ""}
                 </option>
               ))}
             </select>
@@ -165,17 +180,17 @@ export default function PricesPage() {
         {/* Time Range Selector */}
         <div className="flex justify-center gap-3 mb-10">
           {[
-            { label: '1 Week', days: 7 },
-            { label: '1 Month', days: 30 },
-            { label: '3 Months', days: 90 },
+            { label: "1 Week", days: 7 },
+            { label: "1 Month", days: 30 },
+            { label: "3 Months", days: 90 },
           ].map((range) => (
             <button
               key={range.days}
               onClick={() => setTimeRange(range.days)}
               className={`px-6 py-2 rounded-full border transition-all font-medium ${
                 timeRange === range.days
-                  ? 'bg-[#4ce434] border-[#4ce434] text-white'
-                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? "bg-[#4ce434] border-[#4ce434] text-white"
+                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
               }`}
             >
               {range.label}
@@ -185,7 +200,9 @@ export default function PricesPage() {
 
         {/* Chart Container */}
         {loadingHistory && (
-          <div className="text-center py-12 text-gray-500">Loading price history...</div>
+          <div className="text-center py-12 text-gray-500">
+            Loading price history...
+          </div>
         )}
 
         {!loadingHistory && chartData.length === 0 && (
@@ -209,28 +226,35 @@ export default function PricesPage() {
                       <stop offset="95%" stopColor="#4ce434" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#f0f0f0"
+                  />
                   <XAxis
                     dataKey="displayDate"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                    tick={{ fill: "#9ca3af", fontSize: 12 }}
                     dy={10}
                   />
                   <YAxis
                     hide={false}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: '#9ca3af', fontSize: 10 }}
+                    tick={{ fill: "#9ca3af", fontSize: 10 }}
                     tickFormatter={(value) => `${value} ETB`}
                   />
                   <Tooltip
                     contentStyle={{
-                      borderRadius: '12px',
-                      border: 'none',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     }}
-                    formatter={(value: number) => [`${value.toFixed(2)} ETB`, 'Price']}
+                    formatter={(value: number) => [
+                      `${value.toFixed(2)} ETB`,
+                      "Price",
+                    ]}
                   />
                   <Area
                     type="monotone"
@@ -239,7 +263,12 @@ export default function PricesPage() {
                     strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#colorPrice)"
-                    dot={{ r: 6, fill: '#4ce434', strokeWidth: 2, stroke: '#fff' }}
+                    dot={{
+                      r: 6,
+                      fill: "#4ce434",
+                      strokeWidth: 2,
+                      stroke: "#fff",
+                    }}
                     activeDot={{ r: 8, strokeWidth: 0 }}
                   />
                 </AreaChart>
@@ -250,12 +279,14 @@ export default function PricesPage() {
 
         {!loadingHistory && chartData.length > 0 && (
           <p className="text-gray-500 text-sm italic">
-            {selectedCrop?.name} prices in {selectedMarket?.name} over the selected period.
+            {selectedCrop?.name.replace("'", "&apos;")} prices in{" "}
+            {selectedMarket?.name.replace("'", "&apos;")} over the selected
+            period.
           </p>
         )}
       </main>
 
       <BottomNavigation />
     </div>
-  )
+  );
 }
