@@ -29,7 +29,7 @@ allowed_origins = [
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://gebeya-alert-1xso.vercel.app"
+    "https://gebeya-alert.vercel.app"
 ]
 
 # Add frontend URL from config if specified (for production)
