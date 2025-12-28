@@ -29,7 +29,9 @@ allowed_origins = [
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://gebeya-alert.vercel.app"
+    "https://gebeya-alert.vercel.app",
+    "https://gebeya-alert.vercel.app", 
+    "https://gebeya-alert-qpqh2rn6z-tinsaes-projects-7b3f74ab.vercel.app",  # current preview"
 ]
 
 # Add frontend URL from config if specified (for production)
@@ -77,7 +79,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 # CORS middleware must be added BEFORE other middleware to handle preflight requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
