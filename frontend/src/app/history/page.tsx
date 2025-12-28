@@ -58,30 +58,6 @@ export default function PricesPage() {
     fetchCropsAndMarkets();
   }, [isAuthenticated, router]);
 
-  useEffect(() => {
-    if (selectedCropId && selectedMarketId) {
-      fetchPriceHistory();
-    }
-  }, [selectedCropId, selectedMarketId, timeRange]);
-
-  const fetchCropsAndMarkets = async () => {
-    try {
-      setLoading(true);
-      const [cropsData, marketsData] = await Promise.all([
-        apiClient.getCrops(),
-        apiClient.getMarkets(),
-      ]);
-      setCrops(cropsData);
-      setMarkets(marketsData);
-      if (cropsData.length > 0) setSelectedCropId(cropsData[0].id);
-      if (marketsData.length > 0) setSelectedMarketId(marketsData[0].id);
-    } catch (err) {
-      console.error("Failed to fetch data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchPriceHistory = async () => {
     if (!selectedCropId || !selectedMarketId) return;
 
@@ -114,6 +90,31 @@ export default function PricesPage() {
       setLoadingHistory(false);
     }
   };
+
+  useEffect(() => {
+    if (selectedCropId && selectedMarketId) {
+      fetchPriceHistory();
+    }
+  }, [selectedCropId, selectedMarketId, timeRange, fetchPriceHistory]);
+
+  const fetchCropsAndMarkets = async () => {
+    try {
+      setLoading(true);
+      const [cropsData, marketsData] = await Promise.all([
+        apiClient.getCrops(),
+        apiClient.getMarkets(),
+      ]);
+      setCrops(cropsData);
+      setMarkets(marketsData);
+      if (cropsData.length > 0) setSelectedCropId(cropsData[0].id);
+      if (marketsData.length > 0) setSelectedMarketId(marketsData[0].id);
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Process data for Recharts
   const chartData = useMemo(() => {
