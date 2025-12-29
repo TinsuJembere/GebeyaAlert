@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -58,7 +58,7 @@ export default function PricesPage() {
     fetchCropsAndMarkets();
   }, [isAuthenticated, router]);
 
-  const fetchPriceHistory = async () => {
+  const fetchPriceHistory = useCallback(async () => {
     if (!selectedCropId || !selectedMarketId) return;
 
     try {
@@ -89,13 +89,13 @@ export default function PricesPage() {
     } finally {
       setLoadingHistory(false);
     }
-  };
+  }, [selectedCropId, selectedMarketId, timeRange]);
 
   useEffect(() => {
     if (selectedCropId && selectedMarketId) {
       fetchPriceHistory();
     }
-  }, [selectedCropId, selectedMarketId, timeRange, fetchPriceHistory]);
+  }, [selectedCropId, selectedMarketId, fetchPriceHistory]);
 
   const fetchCropsAndMarkets = async () => {
     try {
