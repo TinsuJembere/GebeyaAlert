@@ -1,4 +1,5 @@
 # GebeyaAlert - Agricultural Price Alert System
+live: https://gebeya-alert.vercel.app/
 
 A full-stack web application that helps farmers track crop prices across different markets and receive alerts when prices reach their target goals.
 
